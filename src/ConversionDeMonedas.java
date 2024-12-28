@@ -10,13 +10,15 @@ import java.net.http.HttpResponse;
 
 public class ConversionDeMonedas {
 
-    public String conversion(String divisaBase,int cantidad, String divisaObjetivo){
+    public String conversion(String divisaBase,double cantidad, String divisaObjetivo){
         if(cantidad<=0) {
             return ("El monto debe ser mayor que 0");
         }
+        String resultadoConversion = "";
         try{
 
-            URI direccion = URI.create("https://v6.exchangerate-api.com/v6/5219130255c29ae408eb24f5/pair/"+divisaBase+"/"+divisaObjetivo+"/"+cantidad);
+            URI direccion = URI.create("https://v6.exchangerate-api.com/v6/5219130255c29ae408eb24f5/pair/"
+                    +divisaBase+"/"+divisaObjetivo+"/"+cantidad);
 
             HttpClient client = HttpClient.newHttpClient();
             HttpRequest request = HttpRequest.newBuilder()
@@ -27,9 +29,9 @@ public class ConversionDeMonedas {
             JsonElement jsonElement = JsonParser.parseString(json);
             JsonObject jsonObject = jsonElement.getAsJsonObject();
 
-            var resultadoConvercion = jsonObject.get("conversion_result").getAsString();
-            String respuestaUsuario = "usted a convertido " +cantidad+ " " +divisaBase+ " a " + divisaObjetivo + " " +
-                                      " y el resultado es " + resultadoConvercion;
+            resultadoConversion = jsonObject.get("conversion_result").getAsString();
+            String respuestaUsuario = String.format("Usted ha convertido %.0f %s a %s y el resultado es %s",
+                    cantidad, divisaBase, divisaObjetivo, resultadoConversion);
             System.out.println(respuestaUsuario);
 
         } catch(InterruptedException | IOException e){
@@ -37,7 +39,7 @@ public class ConversionDeMonedas {
         } catch (RuntimeException e){
             System.out.println("Error");
         }
-        return divisaBase;
+        return resultadoConversion;
     }
 
 }
