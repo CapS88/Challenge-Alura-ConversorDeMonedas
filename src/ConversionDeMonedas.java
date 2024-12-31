@@ -10,11 +10,10 @@ import java.net.http.HttpResponse;
 
 public class ConversionDeMonedas {
 
-    public String conversion(String divisaBase,double cantidad, String divisaObjetivo){
+    public ResultadoApi conversion(String divisaBase,double cantidad, String divisaObjetivo){
         if(cantidad<=0) {
-            return ("El monto debe ser mayor que 0");
+            throw new IllegalArgumentException("El monto debe ser mayor que 0");
         }
-        String resultadoConversion = "";
         try{
 
             URI direccion = URI.create("https://v6.exchangerate-api.com/v6/5219130255c29ae408eb24f5/pair/"
@@ -29,18 +28,22 @@ public class ConversionDeMonedas {
             JsonElement jsonElement = JsonParser.parseString(json);
             JsonObject jsonObject = jsonElement.getAsJsonObject();
 
-            resultadoConversion = jsonObject.get("conversion_result").getAsString();
-            String respuestaUsuario = String.format("Usted ha convertido %.0f %s a %s y el resultado es %s",
-                    cantidad, divisaBase, divisaObjetivo, resultadoConversion);
-            System.out.println(respuestaUsuario);
+            if (!jsonObject.has("base_code") || !jsonObject.has("conversion_result")) {
+                throw new RuntimeException("Respuesta inesperada de la API");
+            }
 
-        } catch(InterruptedException | IOException e){
-            System.out.println("A ocurrido un error");
-        } catch (RuntimeException e){
-            System.out.println("Error");
+            String baseCode = jsonObject.get("base_code").getAsString();
+            String targetCode = jsonObject.get("target_code").getAsString();
+            double conversionRate = jsonObject.get("conversion_rate").getAsDouble();
+            double conversionResult = jsonObject.get("conversion_result").getAsDouble();
+
+            return new ResultadoApi(baseCode, targetCode, conversionRate, conversionResult);
+
+        } catch(InterruptedException e){
+            throw new RuntimeException("Error, solicitud interrumpida" + e.getMessage());
+        } catch(IOException e){
+            throw new RuntimeException("Error : Problema al conectarse con la API" + e.getMessage());
         }
-        return resultadoConversion;
     }
-
 }
 
